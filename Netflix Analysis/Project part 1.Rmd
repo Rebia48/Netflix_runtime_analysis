@@ -1,0 +1,796 @@
+---
+title: "Project Part 1"
+author: "Rebeca De La Garza Evia"
+date: "2022-11-06"
+output: pdf_document
+description: "Within this project, I use the Netflix Movies and TV Shows dataset to analyze the factors that result in longer runtimes measure either in minutes for movies or seasons for TV shows. Following this, I explore interesting questions that arise from the initial analysis."
+---
+
+Hello, before exploring the data, I first need to install a new packages and import the dataset itself. This is done in the following chunk. I use summary to ensure the data was imported properly and gain some basic information on the dataset. The head function lets me see how the data looks in the dataset.
+
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(magrittr)
+library(rlang)
+
+netflix <- read.csv('Data//netflix_titles.csv')
+summary(netflix)
+head(netflix)
+```
+
+In this next chunk, I will begin my analysis by observing how runtime relates to the directors. I do this by first spliting the main dataset into two, one for movies and one for tv shows followed by determining which directors have the most works within each of these categories on Netflix and then observing their runtime data individually.
+
+```{r}
+movies <- subset(netflix, type =="Movie")
+movies
+shows <- subset(netflix, type =="TV Show")
+shows
+#makes two datasets
+
+
+mcount <- count(movies, director)
+mcount <- mcount[order(-mcount$n), ]
+mcount
+#creates a dataframe of the directors and how many netflix movies theyve directed
+
+#scount <- count(shows, director)
+#scount <- scount[order(-scount$n), ]
+#scount
+#creates a dataframe for show directors, unfortunetly show directors dont direct tons of shows like movie directors so this is useless 
+
+topd <- c("Rajiv Chilaka", "Raúl Campos, Jan Suter",	"Suhas Kadav", "Marcus Raboy", "Jay Karas", "Cathy Garcia-Molina", "Jay Chapman", "Martin Scorsese", "Youssef Chahine")
+
+#list of directors with the most movies
+
+moviespop <- movies
+topd
+counter <-1
+
+for (i in 1:6131){
+  if (!(movies$director[i] %in% topd)){
+    moviespop <- moviespop[-c(counter),]
+  } else {
+    counter <- counter+1
+  }
+}
+
+#this makes a dataset of only the movies with the relevant directors
+
+minutes <- c()
+
+for (i in 1:131){
+  addd <- unlist(str_split(moviespop$duration[i], " "))
+  minutes <- append(minutes, addd[1])
+}
+
+
+moviespop$runtime <- minutes
+moviespop
+#here i created a new column with the runtimes but in integers
+
+moviesdr<- data.frame(moviespop$director, moviespop$runtime)
+#this new dataframe has just the directors and their respective movie runtimes
+```
+
+here i create a bar plot for the directors
+
+```{r}
+dirvrun <- ggplot(data = moviespop, aes(x = director, y = as.numeric(runtime), fill = director)) + geom_boxplot() + coord_flip() + theme(legend.position="none") + scale_fill_brewer(palette="BrBG")
+
+dirvrun + ggtitle("Movie Director Boxplot") + xlab("Director") + ylab("Runtime")
+
+#makes boxplot
+
+moviesdr
+tapply(as.numeric(moviesdr$moviespop.runtime), moviesdr$moviespop.director, summary)
+#applys the summary for each director
+```
+for this next chunk i will begin to analyze runtime with regard to country of production
+
+```{r}
+mcountry_list <-c()
+for (i in 1:6131){
+  addd <- unlist(str_split(movies$country[i], ", "))
+  mcountry_list <- append(mcountry_list, addd)
+}
+mcountry_list_df <- data.frame(mcountry_list)
+#mcountry_list_df
+
+mcountc <- count(mcountry_list_df, mcountry_list)
+mcountc <- mcountc[order(-mcountc$n), ]
+mcountc
+
+#this creates a dataframe with each country individually and then creates a second dataframe that counts their occurances
+
+scountry_list <-c()
+for (i in 1:6131){
+  addd <- unlist(str_split(shows$country[i], ", "))
+  scountry_list <- append(scountry_list, addd)
+}
+scountry_list_df <- data.frame(scountry_list)
+#scountry_list_df
+
+scountc <- count(scountry_list_df, scountry_list)
+scountc <- scountc[order(-scountc$n), ]
+scountc
+
+#this does the same thing but for the tv shows
+
+mtopc <- c("United States", "India",	"United Kingdom", "Canada", "France", "Germany", "Spain", "Japan", "China")
+
+#list of countries with the most movies
+
+mcountrypop <- movies
+mtopc
+counter <-1
+
+for (i in 1:6131){
+  for (j in movies$country[i]){
+    if (!(movies$country[i] %in% mtopc)){
+      mcountrypop <- mcountrypop[-c(counter),]
+  } else {
+      counter <- counter+1
+      break
+  }
+  }
+}
+mcountrypop
+
+#this creates a dataframe with only the movies that were produced in one of the relevant countries
+
+minutes <- c()
+
+for (i in 1:3602){
+  addd <- unlist(str_split(mcountrypop$duration[i], " "))
+  minutes <- append(minutes, addd[1])
+}
+
+
+mcountrypop$runtime <- minutes
+mcountrypop
+#here i created a new column with the runtimes but in integers
+
+moviesc<- data.frame(mcountrypop$country, mcountrypop$runtime)
+
+#this new dataframe has just the countries and their respective movie runtimes
+
+moviesc
+```
+this chunk will make the datasets for shows using the same methods
+
+```{r}
+stopc <- c("United States", "United Kingdom",	"Japan", "South Korea", "Canada", "France", "India", "Taiwan")
+
+#list of countries with the most shows
+
+scountrypop <- shows
+stopc
+counter <-1
+
+for (i in 1:2676){
+  for (j in shows$country[i]){
+    if (!(shows$country[i] %in% stopc)){
+      scountrypop <- scountrypop[-c(counter),]
+  } else {
+      counter <- counter+1
+      break
+  }
+  }
+}
+scountrypop
+
+#this creates a dataframe with only the movies that were produced in one of the relevant countries
+
+minutes <- c()
+
+for (i in 1:1555){
+  addd <- unlist(str_split(scountrypop$duration[i], " "))
+  minutes <- append(minutes, addd[1])
+}
+
+
+scountrypop$runtime <- minutes
+scountrypop
+#here i created a new column with the runtimes but in integers
+
+showsc<- data.frame(scountrypop$country, scountrypop$runtime)
+
+#this new dataframe has just the countries and their respective movie runtimes
+
+showsc
+```
+
+This next chunk will contain the data visualization for this data
+
+
+```{r}
+mcouvrun <- ggplot(data = mcountrypop, aes(x = country, y = as.numeric(runtime), fill = country)) + geom_boxplot() + coord_flip() + theme(legend.position="none") + scale_fill_brewer(palette="BrBG")
+
+mcouvrun + ggtitle("Movie Country of Production Boxplot") + xlab("Country") + ylab("Runtime")
+
+#makes boxplot
+
+moviesc
+tapply(as.numeric(moviesc$mcountrypop.runtime), moviesc$mcountrypop.country, summary)
+#applys the summary for each country
+
+
+scouvrun <- ggplot(data = scountrypop, aes(x = country, y = as.numeric(runtime), fill = country)) + geom_boxplot() + coord_flip() + theme(legend.position="none") + scale_fill_brewer(palette="BrBG")
+
+scouvrun + ggtitle("Movie Country of Production Boxplot") + xlab("Country") + ylab("Runtime")
+
+#makes boxplot2
+
+showsc
+tapply(as.numeric(showsc$scountrypop.runtime), showsc$scountrypop.country, summary)
+#applys the summary for each country2
+```
+
+In this next chunk I will now move onto the next variable: tv rating. Because there are not hundreds of ratings, i can skip the part where i find the frequency of each and use the most popular, instead i can work with all the ratings data
+
+```{r}
+mrating <- movies
+#mrating
+
+valid<- c("G", "NR", "PG", "PG-13", "R", "TV-14", "TV-G", "TV-MA", "TV-PG", "TV-Y","TV-Y7")
+
+counter <- 1
+for (i in 1:6131){
+  if (!(movies$rating[i] %in%valid)){
+    mrating <- mrating[-c(counter),]
+  } else {
+    counter <- counter+1
+  }
+}
+mrating
+
+#this gets rid of weird ratings
+
+minutes <- c()
+
+for (i in 1:6115){
+  addd <- unlist(str_split(mrating$duration[i], " "))
+  minutes <- append(minutes, addd[1])
+}
+
+
+mrating$runtime <- minutes
+mrating
+#here i created a new column with the runtimes but in integers
+
+moviesr<- data.frame(mrating$rating, mrating$runtime)
+#this new dataframe has just the rating and their respective movie runtimes
+moviesr
+
+srating <- shows
+#srating
+
+minutes <- c()
+
+for (i in 1:2676){
+  addd <- unlist(str_split(srating$duration[i], " "))
+  minutes <- append(minutes, addd[1])
+}
+
+
+srating$runtime <- minutes
+srating
+#here i created a new column with the runtimes but in integers
+
+showsr<- data.frame(srating$rating, srating$runtime)
+#this new dataframe has just the rating and their respective movie runtimes
+
+showsr
+
+```
+Now that I have the useable data, I can do visualization again
+
+```{r}
+
+rbar <- ggplot(mrating, aes(x=rating, fill = rating)) + geom_bar() + scale_fill_brewer(palette="BrBG")
+
+rbar + ggtitle("Movies Per Rating") + xlab("TV Rating") + ylab("Number of Movies")
+
+#makes barplot
+
+rbar2 <- ggplot(srating, aes(x=rating, fill = rating)) + geom_bar() + scale_fill_brewer(palette="BrBG")
+
+rbar2 + ggtitle("Shows Per Rating") + xlab("TV Rating") + ylab("Number of Shows")
+
+#makes barplot2
+
+mratvrun <- ggplot(data = moviesr, aes(x = mrating.rating, y = as.numeric(mrating.runtime), fill = mrating.rating)) + geom_boxplot() + theme(legend.position="none") + scale_fill_brewer(palette="BrBG")
+
+mratvrun + ggtitle("Movie Rating Boxplot") + xlab("Rating") + ylab("Runtime")
+
+#makes boxplot
+
+moviesr
+tapply(as.numeric(moviesr$mrating.runtime), moviesr$mrating.rating, summary)
+
+#applys the summary for each rating2
+
+sratvrun <- ggplot(data = showsr, aes(x = srating.rating, y = as.numeric(srating.runtime), fill = srating.rating)) + geom_boxplot() + theme(legend.position="none") + scale_fill_brewer(palette="BrBG")
+
+sratvrun + ggtitle("Show Rating Boxplot") + xlab("Rating") + ylab("Runtime")
+
+#makes boxplot2
+
+showsr
+tapply(as.numeric(showsr$srating.runtime), showsr$srating.rating, summary)
+
+#applys the summary for each rating2
+```
+These next chunks will be used to analyze the next qualitative factor: the genre. Unlike the last factor, there are too many genres to consider all of them so once again I will first find those that are most popular and make datasets with only those. I will use the same approach I used for countries
+
+```{r}
+mgenre_list <-c()
+for (i in 1:6131){
+  addd <- unlist(str_split(movies$listed_in[i], ", "))
+  mgenre_list <- append(mgenre_list, addd)
+}
+mgenre_list_df <- data.frame(mgenre_list)
+#mgenre_list_df
+
+mcountg <- count(mgenre_list_df, mgenre_list)
+mcountg <- mcountg[order(-mcountg$n), ]
+mcountg
+
+#this creates a dataframe with each genre individually and then creates a second dataframe that counts their occurances
+
+sgenre_list <-c()
+for (i in 1:6131){
+  addd <- unlist(str_split(shows$listed_in[i], ", "))
+  sgenre_list <- append(sgenre_list, addd)
+}
+sgenre_list_df <- data.frame(sgenre_list)
+#sgenre_list_df
+
+scountg <- count(sgenre_list_df, sgenre_list)
+scountg <- scountg[order(-scountg$n), ]
+scountg
+
+#this does the same thing but for the tv shows
+
+mtopg <- c("International Movies", "Dramas", "Comedies", "Documentaries", "Action & Adventure", "Independent Movies", "Children & Family Movies", "Romantic Movies", "Thrillers", "Music & Musicals")
+
+#list of genres with the most movies
+
+mgenrepop <- movies
+mtopg
+counter <-1
+
+for (i in 1:6131){
+  for (j in movies$listed_in[i]){
+    if (!(movies$listed_in[i] %in% mtopg)){
+      mgenrepop <- mgenrepop[-c(counter),]
+  } else {
+      counter <- counter+1
+      break
+  }
+  }
+}
+mgenrepop
+
+#this creates a dataframe with only the movies that were listed as one of the relevant genres
+
+minutes <- c()
+
+for (i in 1:1032){
+  addd <- unlist(str_split(mgenrepop$duration[i], " "))
+  minutes <- append(minutes, addd[1])
+}
+
+
+mgenrepop$runtime <- minutes
+mgenrepop
+#here i created a new column with the runtimes but in integers
+
+moviesg<- data.frame(mgenrepop$listed_in, mgenrepop$runtime)
+
+#this new dataframe has just the countries and their respective movie runtimes
+
+moviesg
+
+```
+this chunk will do the same as the last but for shows
+
+```{r}
+stopg <- c("International TV Shows", "TV Dramas", "TV Comedies", "Crime TV Shows", "Kids' TV", "Docuseries", "Romantic TV Shows", "Reality TV", "British TV Shows")
+
+#list of genres with the most shows
+
+sgenrepop <- shows
+stopg
+counter <-1
+
+for (i in 1:2676){
+  for (j in shows$listed_in[i]){
+    if (!(shows$listed_in[i] %in% stopg)){
+      sgenrepop <- sgenrepop[-c(counter),]
+  } else {
+      counter <- counter+1
+      break
+  }
+  }
+}
+sgenrepop
+
+#this creates a dataframe with only the movies that were listed as one of the relevant genres
+
+minutes <- c()
+
+for (i in 1:506){
+  addd <- unlist(str_split(sgenrepop$duration[i], " "))
+  minutes <- append(minutes, addd[1])
+}
+
+
+sgenrepop$runtime <- minutes
+sgenrepop
+#here i created a new column with the runtimes but in integers
+
+showsg<- data.frame(sgenrepop$listed_in, sgenrepop$runtime)
+
+#this new dataframe has just the genres and their respective movie runtimes
+
+showsg
+```
+
+now i can do some data visulaization
+
+```{r}
+mgenvrun <- ggplot(data = mgenrepop, aes(x = mgenrepop.listed_in, y = as.numeric(runtime), fill = listed_in)) + geom_boxplot() + coord_flip() + theme(legend.position="none") + scale_fill_brewer(palette="BrBG")
+
+mcouvrun + ggtitle("Movie Genre Boxplot") + xlab("Genre") + ylab("Runtime")
+
+#makes boxplot
+
+moviesc
+tapply(as.numeric(moviesg$mgenrepop.runtime), moviesg$mgenrepop.listed_in, summary)
+#applys the summary for each genre
+
+
+sgenvrun <- ggplot(data = sgenrepop, aes(x = sgenrepoplisted_in, y = as.numeric(runtime), fill = listed_in)) + geom_boxplot() + coord_flip() + theme(legend.position="none") + scale_fill_brewer(palette="BrBG")
+
+scouvrun + ggtitle("Show Genre Boxplot") + xlab("Genre") + ylab("Runtime")
+
+#makes boxplot2
+
+showsg
+tapply(as.numeric(showsg$sgenrepop.runtime), showsg$sgenrepop.listed_in, summary)
+#applys the summary for each country2
+```
+
+Moving onto quantitative varibles, I will begin by exploring to see if there exists some correlation between the release year and runtime. i can use all the data here
+
+```{r}
+mrelease <- movies
+mrelease
+
+minutes <- c()
+
+for (i in 1:6131){
+  addd <- unlist(str_split(mrelease$duration[i], " "))
+  minutes <- append(minutes, addd[1])
+}
+
+
+mrelease$runtime <- minutes
+mrelease
+#here i created a new column with the runtimes but in integers
+
+moviesre<- data.frame(mrelease$release_year, mrelease$runtime)
+#this new dataframe has just the release yr and their respective movie runtimes
+moviesre
+
+srelease <- shows
+#srelease
+
+minutes <- c()
+
+for (i in 1:2676){
+  addd <- unlist(str_split(srelease$duration[i], " "))
+  minutes <- append(minutes, addd[1])
+}
+
+
+srelease$runtime <- minutes
+srelease
+#here i created a new column with the runtimes but in integers
+
+showsre<- data.frame(srelease$release_year, srelease$runtime)
+#this new dataframe has just the release yr and their respective movie runtimes
+
+showsre
+```
+
+Now i can use the data to make a visualization of it. For the quanitative data i will primarily use scatterplots.
+
+```{r}
+mrelvrun <- ggplot(data = moviesre, aes(x = mrelease.release_year, y = as.numeric(mrelease.runtime))) + geom_point()
+
+mrelvrun + ggtitle("Movie Release Year Scatterplot") + xlab("Year") + ylab("Runtime")
+
+#makes scatterplot1
+
+srelvrun <- ggplot(data = showsre, aes(x = srelease.release_year, y = as.numeric(srelease.runtime))) + geom_point()
+
+srelvrun + ggtitle("Show Release Year Scatterplot") + xlab("Year") + ylab("Runtime")
+
+#makes scatterplot2
+
+recount <- count(movies, release_year)
+recount <- recount[order(-recount$n), ]
+recount
+
+#creates a dataframe with the number of movies released per year
+
+mrelvct <- ggplot(recount, aes(x = release_year, y = n)) + geom_line()
+
+mrelvct + ggtitle("Movies per Year") + xlab("Year") + ylab("Number of Movies")
+
+#creates lineplot1
+
+recount2 <- count(shows, release_year)
+recount2 <- recount[order(-recount$n), ]
+recount2
+
+#creates a dataframe with the number of movies released per year
+
+mrelvct <- ggplot(recount2, aes(x = release_year, y = n)) + geom_line()
+
+mrelvct + ggtitle("Shows per Year") + xlab("Year") + ylab("Number of Movies")
+
+#creates lineplot2
+```
+
+Moving onto the next quntitative factor. For date added to netflix, because the data comes in the form of "month day, year", i first have to convert the data into a numeric form by making each date to follow the form "year.decimal" by considering the proprtion of the year each date has passed, I will make a function to do this in this chunk
+
+```{r}
+movies
+
+madded <- c()
+for (i in 1:6131){
+  madded <- append(madded, movies$date_added[i])
+}
+
+#makes a vector containing the dates added
+
+date_to_prop <- function(cha){
+  use <-c()
+  dec <- c()
+  prop <- (0)
+  use <- unlist(strsplit(cha, ", "))
+  dec <- unlist(strsplit(use[1], " ")) 
+  
+  if ((dec[1] == "January") | (is.na(dec[1]))){
+    prop <- prop
+  }else if(dec[1] == "February"){
+    prop <- prop+1/12
+  }else if(dec[1] == "March"){
+    prop <- prop+2/12
+  }else if(dec[1] == "April"){
+    prop <- prop+3/12
+  }else if(dec[1] == "May"){
+    prop <- prop+4/12
+  }else if(dec[1] == "June"){
+    prop <- prop+5/12
+  }else if(dec[1] == "July"){
+    prop <- prop+6/12
+  }else if(dec[1] == "August"){
+    prop <- prop+7/12
+  }else if(dec[1] == "September"){
+    prop <- prop+8/12
+  }else if(dec[1] == "October"){
+    prop <- prop+9/12
+  }else if(dec[1] == "November"){
+    prop <- prop+10/12
+  }else if(dec[1] == "December"){
+    prop <- prop+11/12
+  }
+  
+  day<- as.numeric(dec[2])
+  year<- as.numeric(use[2])
+  prop <- prop + day/365 + year
+  prop
+}
+#date_to_prop("November 3, 2021")
+
+#creates function that will turn character date into numeric data
+
+madded_prop <- c()
+for (i in 1:6131){
+  addd <- date_to_prop(madded[i])
+  madded_prop <- append(madded_prop, addd)
+}
+
+#creates new vector with numeric date data
+
+sadded <- c()
+for (i in 1:2676){
+  sadded <- append(sadded, shows$date_added[i])
+}
+
+#makes a vector containing the dates added, this time for shows
+
+sadded_prop <- c()
+for (i in 1:2676){
+  addd <- date_to_prop(sadded[i])
+  sadded_prop <- append(sadded_prop, addd)
+}
+
+#creates new vector with numeric date data for shows
+
+madded_df <- data.frame(madded_prop, mrelease$runtime)
+madded_df
+
+sadded_df <- data.frame(sadded_prop, srelease$runtime)
+sadded_df
+
+#makes movie and show df
+```
+
+now that i have converted the data into something quantifiably usable andorganized it into dataframes, i can move onto the data visualization
+
+```{r}
+maddvrun <- ggplot(data = madded_df, aes(x = madded_prop, y = as.numeric(mrelease.runtime))) + geom_point()
+
+maddvrun + ggtitle("Movie Added Date Scatterplot") + xlab("Date (by Year)") + ylab("Runtime")
+
+#makes scatterplot1
+
+saddvrun <- ggplot(data = sadded_df, aes(x = sadded_prop, y = as.numeric(srelease.runtime))) + geom_point()
+
+saddvrun + ggtitle("Show Added Date Scatterplot") + xlab("Date (by Year)") + ylab("Runtime")
+
+#makes scatterplot2
+
+```
+onto the next quantitative factor: time of year added to netflix. this will use the same appraoch as the last as i turn each date into numeric data. I will have to revamp my function to not include the year this time
+```{r}
+
+movies
+
+maddedy <- c()
+for (i in 1:6131){
+  maddedy <- append(maddedy, movies$date_added[i])
+}
+
+#makes a vector containing the dates added
+
+date_to_propy <- function(cha){
+  use <-c()
+  dec <- c()
+  prop <- (0)
+  use <- unlist(strsplit(cha, ", "))
+  dec <- unlist(strsplit(use[1], " ")) 
+  
+  if ((dec[1] == "January") | (is.na(dec[1]))){
+    prop <- prop
+  }else if(dec[1] == "February"){
+    prop <- prop+1/12
+  }else if(dec[1] == "March"){
+    prop <- prop+2/12
+  }else if(dec[1] == "April"){
+    prop <- prop+3/12
+  }else if(dec[1] == "May"){
+    prop <- prop+4/12
+  }else if(dec[1] == "June"){
+    prop <- prop+5/12
+  }else if(dec[1] == "July"){
+    prop <- prop+6/12
+  }else if(dec[1] == "August"){
+    prop <- prop+7/12
+  }else if(dec[1] == "September"){
+    prop <- prop+8/12
+  }else if(dec[1] == "October"){
+    prop <- prop+9/12
+  }else if(dec[1] == "November"){
+    prop <- prop+10/12
+  }else if(dec[1] == "December"){
+    prop <- prop+11/12
+  }
+  
+  day<- as.numeric(dec[2])
+  year<- as.numeric(use[2])
+  prop <- prop + day/365
+  prop
+}
+date_to_propy("November 3, 2021")
+
+#creates function that will turn character date into numeric data
+
+madded_propy <- c()
+for (i in 1:6131){
+  addd <- date_to_propy(maddedy[i])
+  madded_propy <- append(madded_propy, addd)
+}
+
+#creates new vector with numeric date data
+
+saddedy <- c()
+for (i in 1:2676){
+  saddedy <- append(saddedy, shows$date_added[i])
+}
+
+#makes a vector containing the dates added, this time for shows
+
+sadded_propy <- c()
+for (i in 1:2676){
+  addd <- date_to_propy(saddedy[i])
+  sadded_propy <- append(sadded_propy, addd)
+}
+
+#creates new vector with numeric date data for shows
+
+maddedy_df <- data.frame(madded_propy, mrelease$runtime)
+maddedy_df
+
+saddedy_df <- data.frame(sadded_propy, srelease$runtime)
+saddedy_df
+
+#makes movie and show df
+
+maddedy2 <- c()
+for (i in maddedy){
+  use <-c()
+  dec <- c()
+  use <- unlist(strsplit(i, ", "))
+  dec <- unlist(strsplit(use[1], " "))
+  maddedy2 <- append(maddedy2, dec[1])
+}
+
+mmonth_df <- data.frame(maddedy2)
+mmonth_df
+
+saddedy2 <- c()
+for (i in saddedy){
+  use <-c()
+  dec <- c()
+  use <- unlist(strsplit(i, ", "))
+  dec <- unlist(strsplit(use[1], " "))
+  saddedy2 <- append(saddedy2, dec[1])
+}
+
+smonth_df <- data.frame(saddedy2)
+smonth_df
+
+#creates dataframe to count the frequencies of each month
+```
+
+i will now make scatterplots for this data as well. i will also generalize by month to make histograms of listings per month
+
+```{r}
+madyvrun <- ggplot(data = maddedy_df, aes(x = madded_propy, y = as.numeric(mrelease.runtime))) + geom_point()
+
+madyvrun + ggtitle("Movie Added Date Scatterplot") + xlab("Date (by Month)") + ylab("Runtime")
+
+#makes scatterplot1
+
+sadyvrun <- ggplot(data = saddedy_df, aes(x = sadded_propy, y = as.numeric(srelease.runtime))) + geom_point()
+
+sadyvrun + ggtitle("Show Added Date Scatterplot") + xlab("Date (by Month)") + ylab("Runtime")
+
+#makes scatterplot2
+
+macount <- count(mmonth_df, maddedy2)
+macount <- macount[order(-macount$n), ]
+macount
+
+sacount <- count(smonth_df, saddedy2)
+sacount <- sacount[order(-sacount$n), ]
+sacount
+
+#makes dataframes with the individual counts of listings per month
+
+ggplot(mmonth_df, aes(x = maddedy2)) + geom_histogram(stat = "count") + ggtitle("Movie Added Date Histogram") + xlab("Date (by Month)") + ylab("Count")
+
+
+ggplot(smonth_df, aes(x = saddedy2)) + geom_histogram(stat = "count") + ggtitle("Show Added Date Histogram") + xlab("Date (by Month)") + ylab("Count")
+
+#makes histograms
+```
+
